@@ -1,0 +1,11 @@
+spring:
+  application:
+
+    name: ms-productos
+  profiles:
+    # El perfil activo
+    active: dev
+
+
+  config:
+    import: "configserver:http://ms-config-server:8888"
