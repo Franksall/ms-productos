@@ -1,0 +1,27 @@
+# Este archivo (src/test/resources/application.yml)
+# se usa SÓLO cuando se corren las pruebas (./gradlew test)
+
+spring:
+  # 1. Desactiva el Config Server
+  cloud:
+    config:
+      enabled: false
+
+  # 2. Desactiva AMBOS tipos de Base de Datos (Reactiva y Bloqueante)
+  autoconfigure:
+    exclude:
+      # --- Las que ya teníamos (Reactiva) ---
+      - org.springframework.boot.autoconfigure.r2dbc.R2dbcAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.r2dbc.R2dbcDataAutoConfiguration
+
+      # --- ¡AÑADE ESTAS LÍNEAS (Bloqueante/JDBC)! ---
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration
+      - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
+
+  # 3. "Engaña" a la Seguridad
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: "http://dummy-issuer-for-tests.com"
