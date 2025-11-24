@@ -1,0 +1,31 @@
+spring:
+  # Desactiva el Config Server
+  cloud:
+    config:
+      enabled: false
+    discovery:
+      enabled: false
+
+  #  Excluir configuraciones de Base de Datos para que no intente conectarse
+  autoconfigure:
+    exclude:
+      # -Reactiva (R2DBC)-
+      - org.springframework.boot.autoconfigure.r2dbc.R2dbcAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.r2dbc.R2dbcDataAutoConfiguration
+
+      # -Bloqueante (JPA/JDBC)  dependencias híbrida
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration
+      - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
+
+  #  Seguridad
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: "http://dummy-issuer-for-tests.com"
+eureka:
+  client:
+    enabled: false
+    register-with-eureka: false
+    fetch-registry: false

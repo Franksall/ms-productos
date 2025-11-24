@@ -1,0 +1,154 @@
+
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '3.5.7'
+	id 'io.spring.dependency-management' version '1.1.7'
+    id 'jacoco'
+    id "org.openapi.generator" version "7.1.0"
+}
+
+group = 'com.example'
+version = '0.0.1-SNAPSHOT'
+description = 'Demo project for Spring Boot'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(17)
+	}
+}
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+ext {
+	set('springCloudVersion', "2025.0.0")
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	implementation 'org.springframework.boot:spring-boot-starter-data-r2dbc'
+	implementation 'org.springframework.boot:spring-boot-starter-webflux'
+	implementation 'org.springframework.cloud:spring-cloud-starter-config'
+    implementation 'org.springdoc:springdoc-openapi-starter-webflux-ui:2.5.0'
+    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
+    implementation 'org.springframework.security:spring-security-oauth2-jose' //  JWTs
+    // 1. Para que Spring Boot sepa de Tracing (Trazas)
+    implementation 'io.micrometer:micrometer-tracing-bridge-otel'
+    // 2. El exportador que envía los datos al Collector
+	compileOnly 'org.projectlombok:lombok'
+	runtimeOnly 'org.postgresql:postgresql'
+	runtimeOnly 'org.postgresql:r2dbc-postgresql'
+	annotationProcessor 'org.projectlombok:lombok'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'io.projectreactor:reactor-test'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testImplementation 'org.springframework.security:spring-security-test'
+
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+}
+
+dependencyManagement {
+	imports {
+		mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+	}
+}
+// --- Configuración de JaCoCo ---
+
+jacoco {
+
+    toolVersion = "0.8.11"
+}
+//  archivos queremos ignorar
+def exclusions = [
+        '**/com/example/msproductos/api/**',  //  Swagger
+        '**/MsProductosApplication**',        //  La clase Main
+        '**/configuration/**',                //  Configuraciones de Spring
+        '**/model/Q*',
+        '**/SecurityConfig**',
+        '**/model/Error*',
+        '**/model/ErrorDetail*',
+]
+
+jacocoTestReport {
+    //  reporte HTML ignore los archivos de def exclusions
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: exclusions)
+        }))
+    }
+    reports {
+        xml.required = true
+        html.required = true
+    }
+}
+
+//  genera el reporte de cobertura"
+test.finalizedBy jacocoTestReport
+
+//  85%
+jacocoTestCoverageVerification {
+    // Esto asegura que la VALIDACIÓN (el 85%) ignore los archivos de arriba
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: exclusions)
+        }))
+    }
+    violationRules {
+        rule {
+            element = 'BUNDLE'
+            limit {
+                counter = 'LINE'
+                value = 'COVEREDRATIO'
+                minimum = 0.85 // ¡Ahora sí llegaremos sobrados!
+            }
+        }
+    }
+}
+
+
+jacocoTestReport.finalizedBy jacocoTestCoverageVerification
+tasks.named('test') {
+	useJUnitPlatform()
+}
+// Configuración para generar código desde el YAML
+openApiGenerate {
+    generatorName = "spring"
+    inputSpec = "$projectDir/src/main/resources/openapi/openapi.yml"
+    outputDir = "$buildDir/generated"
+    apiPackage = "com.example.msproductos.api"
+    modelPackage = "com.example.msproductos.model"
+    configOptions = [
+            interfaceOnly: "true",
+            useSpringBoot3: "true",
+            skipDefaultInterface: "true",
+            useTags: "true",
+            reactive: "true"
+    ]
+}
+
+// Integraacion del code con Java
+sourceSets {
+    main {
+        java {
+            srcDir "$buildDir/generated/src/main/java"
+        }
+    }
+}
+
+// Dependencias
+dependencies {
+    implementation 'org.openapitools:jackson-databind-nullable:0.2.6'
+    implementation 'io.swagger.core.v3:swagger-annotations:2.2.15'
+    implementation 'jakarta.validation:jakarta.validation-api:3.0.2'
+}
+// Orden: Antes de compilar Java,  ejecuta el robot
+compileJava.dependsOn tasks.openApiGenerate

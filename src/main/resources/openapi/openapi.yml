@@ -1,0 +1,205 @@
+openapi: 3.0.1
+info:
+  title: OpenAPI definition
+  version: v0
+servers:
+  - url: http://localhost:8081
+    description: Generated server url
+paths:
+  /api/productos:
+    get:
+      tags:
+        - producto-controller
+      operationId: getAllProductos
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Producto"
+        "500":
+          description: Error Interno
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+    post:
+      tags:
+        - producto-controller
+      operationId: createProducto
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Producto"
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            "*/*":
+              schema:
+                $ref: "#/components/schemas/Producto"
+        "400":
+          description: Error de Validación
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+
+  /api/productos/{id}:
+    get:
+      tags:
+        - producto-controller
+      operationId: getProductoById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                $ref: "#/components/schemas/Producto"
+        "404":
+          description: No Encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+    put:
+      tags:
+        - producto-controller
+      operationId: updateProducto
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Producto"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                $ref: "#/components/schemas/Producto"
+    delete:
+      tags:
+        - producto-controller
+      operationId: deleteProducto
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "204":
+          description: No Content
+
+  /api/productos/{id}/stock:
+    put:
+      tags:
+        - producto-controller
+      operationId: actualizarStock
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: cantidad
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int32
+      responses:
+        "200":
+          description: OK
+
+  /api/productos/bajo-stock:
+    get:
+      tags:
+        - producto-controller
+      operationId: getProductosBajoStock
+      parameters:
+        - name: minimo
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int32
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Producto"
+
+components:
+  schemas:
+    #
+    Producto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        nombre:
+          type: string
+        descripcion:
+          type: string
+        precio:
+          type: number
+          format: double
+        stock:
+          type: integer
+          format: int32
+        activo:
+          type: boolean
+        fechaCreacion:
+          type: string
+          format: date-time
+
+    # errores
+    ErrorModel:
+      type: object
+      properties:
+        success:
+          type: boolean
+        errors:
+          type: array
+          items:
+            $ref: "#/components/schemas/ErrorDetail"
+
+    ErrorDetail:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        field:
+          type: string
